@@ -23,6 +23,7 @@ export const App: React.FC = () => {
     return todos.filter(todo => {
       const matchesQuery = todo.title.toLowerCase().includes(normalizedQuery);
       const matchesStatus =
+        filter === 'all' ||
         filter === '' ||
         (filter === 'active' && !todo.completed) ||
         (filter === 'completed' && todo.completed);
