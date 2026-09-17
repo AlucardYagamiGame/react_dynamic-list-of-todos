@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import 'bulma/css/bulma.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 
@@ -10,32 +10,6 @@ import { Loader } from './components/Loader';
 import { getTodos } from './api';
 import { Todo } from './types/Todo';
 
-function filterBy(todos: Todo[], filter = '', query = ''): Todo[] {
-  let currentFilteredTodos = [...todos];
-
-  if (query.length !== 0) {
-    currentFilteredTodos = currentFilteredTodos.filter(todo =>
-      todo.title.toLowerCase().includes(query.toLowerCase()),
-    );
-  }
-
-  switch (filter) {
-    case 'completed':
-      currentFilteredTodos = currentFilteredTodos.filter(
-        todo => todo.completed,
-      );
-      break;
-
-    case 'active':
-      currentFilteredTodos = currentFilteredTodos.filter(
-        todo => !todo.completed,
-      );
-      break;
-  }
-
-  return currentFilteredTodos;
-}
-
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isTodosLoading, setIsTodosLoading] = useState(true);
@@ -43,8 +17,24 @@ export const App: React.FC = () => {
   const [filter, setFilter] = useState('');
   const [query, setQuery] = useState('');
 
-  const selectedTodo = todos.find(todo => todo.id === selectedTodoId) ?? null;
-  const filteredTodos = filterBy(todos, filter, query);
+  const visibleTodos = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return todos.filter(todo => {
+      const matchesQuery = todo.title.toLowerCase().includes(normalizedQuery);
+      const matchesStatus =
+        filter === '' ||
+        (filter === 'active' && !todo.completed) ||
+        (filter === 'completed' && todo.completed);
+
+      return matchesQuery && matchesStatus;
+    });
+  }, [todos, filter, query]);
+
+  const selectedTodo = useMemo(
+    () => todos.find(todo => todo.id === selectedTodoId) ?? null,
+    [todos, selectedTodoId],
+  );
 
   useEffect(() => {
     getTodos()
@@ -69,10 +59,10 @@ export const App: React.FC = () => {
 
             <div className="block">
               <TodoFilter
-                filterBy={(currentFilter, currentQuery) => {
-                  setFilter(currentFilter);
-                  setQuery(currentQuery);
-                }}
+                filter={filter}
+                query={query}
+                onFilterChange={setFilter}
+                onQueryChange={setQuery}
               />
             </div>
 
@@ -81,7 +71,7 @@ export const App: React.FC = () => {
                 <Loader />
               ) : (
                 <TodoList
-                  todos={filteredTodos}
+                  todos={visibleTodos}
                   selectedTodoId={selectedTodoId}
                   onTodoSelect={handleTodoSelect}
                 />

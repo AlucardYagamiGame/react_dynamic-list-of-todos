@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 type Props = {
-  filterBy: (filter: string, query: string) => void;
+  filter: string;
+  query: string;
+  onFilterChange: (filter: string) => void;
+  onQueryChange: (query: string) => void;
 };
 
-export const TodoFilter: React.FC<Props> = ({ filterBy }) => {
-  const [filter, setFilter] = useState('all');
-  const [query, setQuery] = useState('');
-
+export const TodoFilter: React.FC<Props> = ({
+  filter,
+  query,
+  onFilterChange,
+  onQueryChange,
+}) => {
   return (
     <form className="field has-addons">
       <p className="control">
@@ -15,12 +20,7 @@ export const TodoFilter: React.FC<Props> = ({ filterBy }) => {
           <select
             data-cy="statusSelect"
             value={filter}
-            onChange={event => {
-              const nextFilter = event.target.value;
-
-              setFilter(nextFilter);
-              filterBy(nextFilter, query);
-            }}
+            onChange={event => onFilterChange(event.target.value)}
           >
             <option value="all">All</option>
             <option value="active">Active</option>
@@ -36,12 +36,7 @@ export const TodoFilter: React.FC<Props> = ({ filterBy }) => {
           className="input"
           placeholder="Search..."
           value={query}
-          onChange={event => {
-            const nextQuery = event.target.value;
-
-            setQuery(nextQuery);
-            filterBy(filter, nextQuery);
-          }}
+          onChange={event => onQueryChange(event.target.value)}
         />
         <span className="icon is-left">
           <i className="fas fa-magnifying-glass" />
@@ -54,10 +49,7 @@ export const TodoFilter: React.FC<Props> = ({ filterBy }) => {
               data-cy="clearSearchButton"
               type="button"
               className="delete"
-              onClick={() => {
-                setQuery('');
-                filterBy(filter, '');
-              }}
+              onClick={() => onQueryChange('')}
             />
           </span>
         )}
